@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  
+  // 💡 ADD THESE TWO LINES: Auth.js requires them to save Google profiles!
+  emailVerified DateTime?
+  image         String?   
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations (Keep these exactly as you had them)
+  accounts      Account[]
+  sessions      Session[]
+  articles      Article[]
+  comments      Comment[]
+  likes         Like[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  // 💡 Auth.js requires this exact name
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  // 💡 FIXED: Must be named 'user' and link to 'userId'
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String   // 💡 Auth.js requires this exact name
+  expires      DateTime
+
+  // 💡 FIXED: Must be named 'user' and link to 'userId'
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 💡 ADDED: Auth.js strongly recommends this to prevent adapter crashes
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Article {
+  id            String    @id @default(uuid())
+  title         String
+  content       String
+  category      String
+  imageUrl String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id])
+  comments      Comment[]
+  likes         Like[]
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  text   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Blog Relations
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article   @relation(fields: [articleId], references: [id])
+}
+
+model Like {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+
+  // Blog Relations
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article   @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId])
+}
