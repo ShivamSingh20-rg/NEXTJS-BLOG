@@ -46,7 +46,7 @@ export async function createComment({ articleId, text }: PostCommentArgs) {
     return { success: true, data: comment };
   } catch (error) {
     console.error("Failed to create comment action:", error);
-    return { success: false, error: "Database failed to save comment." };
+    return { success: false, error: "Database failed to save hello0 comment." };
   }
 }
 
